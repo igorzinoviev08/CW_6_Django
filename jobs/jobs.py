@@ -1,5 +1,6 @@
 import datetime
 
+import pytz
 from django.conf import settings
 from django.core.mail import send_mail
 from datetime import timedelta, datetime
@@ -7,8 +8,11 @@ from mailing.models import Mailing, Log
 
 
 def send_mailings():
-    current_datetime = datetime.now()
+    tz = pytz.timezone('Europe/Moscow')
+    current_datetime = datetime.now(tz)
+
     for mailing in Mailing.objects.filter(status='created'):
+
         is_mailing = False
         emails = [client.email for client in mailing.recipients.all()]
         month_start = mailing.start_time.month
