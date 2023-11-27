@@ -149,6 +149,35 @@ class ClientCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
+class ClientUpdateView(LoginRequiredMixin, UpdateView):
+    model = Client
+    form_class = ClientForm
+    success_url = reverse_lazy('mailing:client_list')
+
+
+class ClientDeleteView(LoginRequiredMixin, DeleteView):
+    model = Client
+    success_url = reverse_lazy('mailing:client_list')
+
+
+class MessageListView(ListView):
+    model = Message  # Corrected from Client to Message
+    template_name = 'mailing/message_list.html'
+    context_object_name = 'messages'  # Corrected from 'message' to 'messages'
+
+    def get_queryset(self):
+        mailing_pk = self.kwargs['mailing_pk']
+        return Message.objects.filter(mailing__pk=mailing_pk)
+
+    def get_context_data(self, kwargs):
+        context = super().get_context_data(kwargs)
+        user = self.request.user
+        user_group_names = [group.name for group in user.groups.all()]
+        context['user_group_names'] = user_group_names
+        context['mailing_pk'] = self.kwargs['mailing_pk']
+        return context
+
+
 class MessageCreateView(LoginRequiredMixin, CreateView):
     model = Message
     form_class = MessageForm
@@ -161,6 +190,24 @@ class MessageCreateView(LoginRequiredMixin, CreateView):
         message.mailing = mailing
         message.save()
         return super().form_valid(form)
+
+
+class MessageUpdateView(LoginRequiredMixin, UpdateView):
+    model = Message
+    form_class = MessageForm
+    success_url = reverse_lazy('mailing:mailing')
+
+    def form_valid(self, form):
+        mailing = get_object_or_404(Mailing, pk=self.kwargs['mailing_pk'])
+        message = form.save(commit=False)
+        message.mailing = mailing
+        message.save()
+        return super().form_valid(form)
+
+
+class MessageDeleteView(LoginRequiredMixin, DeleteView):
+    model = Message
+    success_url = reverse_lazy('mailing:mailing')
 
 
 class DeliveryReportView(ListView):
